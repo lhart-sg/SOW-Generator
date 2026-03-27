@@ -154,7 +154,7 @@
     body { background: #fff; }
     .app { padding: 0; max-width: 100%; }
     .header, .summary-bar, .action-btns, .how-it-works, .input-section,
-    .btn-generate, .error-box, .hero, .products { display: none !important; }
+    .btn-generate, .error-box, .hero, .products, #api-key-bar { display: none !important; }
     .preview-wrap { box-shadow: none; padding: 20px; border-radius: 0; }
   }
 
@@ -355,14 +355,18 @@ function renderSOW(sow) {
     <div class="sow-title">Statement of Work No. ${esc(sow.sowNumber)}</div>
 
     <p class="sow-intro">
-      This Statement of Work (<strong>"SOW"</strong>) is effective as of ${esc(sow.effectiveDate)}
-      (the <strong>"SOW Effective Date"</strong>) in connection with the ${esc(sow.msaDate)}
-      Master Services Agreement (the <strong>"MSA"</strong>) between SETGO Partners, LLC,
-      a Wisconsin limited liability company (<strong>"SETGO"</strong>), and
-      <strong>${esc(sow.clientName)}</strong> (<strong>"Client"</strong>).
-      This SOW is effective on the SOW Effective Date and will remain in effect until all of the
-      services to be provided hereunder have been completed (collectively, the <strong>"Project"</strong>),
-      unless earlier terminated in accordance with the MSA.
+      This Statement of Work (<strong>&#x201C;SOW&#x201D;</strong>) is effective as of ${esc(sow.effectiveDate)}
+      (the <strong>&#x201C;SOW Effective Date&#x201D;</strong>) in connection with the ${esc(sow.msaDate)}
+      Master Services Agreement (the <strong>&#x201C;MSA&#x201D;</strong>) between SETGO Partners, LLC,
+      a Wisconsin limited liability company (<strong>&#x201C;SETGO&#x201D;</strong>), and the other party
+      named on the signature page to this SOW (<strong>&#x201C;Client&#x201D;</strong>).
+      This SOW is effective on the SOW Effective Date and will remain in effect until all of the services
+      to be provided hereunder have been completed (collectively, the <strong>&#x201C;Project&#x201D;</strong>),
+      unless earlier terminated in accordance with the MSA. This SOW is governed by the terms set forth
+      in the MSA. In the event of a conflict between the provisions of this SOW and the MSA, the provisions
+      of the MSA shall control unless the SOW specifically references the provisions of the MSA that are
+      inconsistent therewith, in which case the SOW shall control for those specific provisions only.
+      Capitalized terms used and not defined in this SOW will have the meaning given in the MSA.
     </p>
 
     <div class="sec-heading">1. Services</div>

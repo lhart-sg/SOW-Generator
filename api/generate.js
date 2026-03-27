@@ -13,13 +13,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Transcript too short or missing" });
   }
 
-  const SYSTEM_PROMPT = `You are an expert Salesforce implementation consultant at SETGO Partners, LLC. Analyze the scoping call transcript and return ONLY a valid JSON object — no markdown, no explanation, just raw JSON.
+  const SYSTEM_PROMPT = `You are an expert Salesforce implementation consultant at SETGO Partners, LLC. Analyze the scoping call transcript and return ONLY a valid JSON object. No markdown, no explanation, no code fences — raw JSON only.
 
-Return this exact structure:
+JSON structure:
 {
-  "sowNumber": "____",
-  "effectiveDate": "[DATE]",
-  "msaDate": "[MSA DATE]",
+  "sowNumber": "1XXX",
+  "effectiveDate": "Month DD, YYYY",
+  "msaDate": "Month DD, YYYY",
   "clientName": "Full Client Name",
   "sowType": "Design & Implementation",
   "products": ["Sales Cloud"],
@@ -33,16 +33,80 @@ Return this exact structure:
   ],
   "exclusions": ["exclusion 1", "exclusion 2"],
   "additionalAssumptions": ["assumption specific to this engagement"],
-  "notes": "Brief AI notes on key scope decisions"
+  "notes": "Brief notes on key scope decisions made"
 }
 
-RULES:
-- Only include Salesforce products explicitly mentioned: Sales Cloud, Service Cloud, Revenue Cloud / CPQ, Marketing Cloud / MCAE, Field Service Lightning, Sales Engagement
-- Only include phases relevant to the discussion. Common phases: Discovery & Design, Configuration, Reports & Dashboards, User Acceptance Testing (UAT), Data Migration, Integration, Training, Post Go Live Support, Project Management
-- If something is ambiguous or not discussed, assume OUT OF SCOPE and add to exclusions
-- Estimate hours at $250/hr T&M: Discovery/Design 8-40hrs, Config 10-60hrs, Data Migration 4-16hrs, Integration 8-32hrs, Testing 4-12hrs, Training 2-8hrs, Project Mgmt 6-12hrs
-- Use professional SETGO SOW language — formal, specific, client-facing
-- Return ONLY the JSON object, no markdown fences`;
+SOW HEADER RULES:
+- sowNumber: generate a realistic SETGO SOW number between 1100 and 1200 (e.g. 1142, 1157, 1163). Never use "____" or "1XXX".
+- effectiveDate: extract the date from the transcript if mentioned. If not mentioned, use today's date: March 26, 2026. Format as "Month DD, YYYY" (e.g. "March 26, 2026").
+- msaDate: extract the MSA/contract date from transcript if mentioned. If not mentioned, use the same as effectiveDate.
+- clientName: extract the full company name from the transcript.
+
+HOUR ESTIMATION RULES - FOLLOW EXACTLY:
+
+DISCOVERY & DESIGN:
+- Start with 4 hours per Salesforce product in scope
+- Add 2 hours per integration discussed
+- Add 2 hours if data migration is in scope
+- Add 4 hours if multiple business units or highly complex processes discussed
+- Round to nearest even number. Min 8, Max 40.
+
+CONFIGURATION:
+- Sales Cloud: 16 hours base
+- Service Cloud: add 16 hours
+- Sales Engagement: add 8 hours
+- Revenue Cloud / CPQ: add 24 hours
+- Marketing Cloud / MCAE: add 20 hours
+- Field Service Lightning: add 24 hours
+- Add 4 hours if complex automation or flows discussed
+- Add 4 hours per custom object beyond standard (Lead, Contact, Account, Opportunity)
+- Min 10, Max 80.
+
+REPORTS & DASHBOARDS:
+- Always include. Default 4 hours. Use 8 hours only if advanced reporting explicitly discussed.
+
+USER ACCEPTANCE TESTING (UAT):
+- Always include. Hours = round up (configuration hours divided by 8). Min 4, Max 16.
+
+DATA MIGRATION:
+- Only include if explicitly discussed in transcript
+- Accounts and Contacts only: 8 hours. Add 4 hours per additional object. Min 4, Max 24.
+
+INTEGRATIONS - one phase per integration:
+- Simple out-of-box connector: 4 hours
+- Middleware (Workato, MuleSoft, Zapier): 8 hours
+- Custom REST API: 12 hours
+- Complex bi-directional: 16 hours
+
+TRAINING:
+- Always include. Base 4 hours. Add 2 hours per additional product beyond first. Max 12.
+
+DEPLOYMENT PREP & GO LIVE:
+- ONLY include if client has existing Salesforce org needing sandbox to production deploy
+- New implementations: DO NOT include. Hours: 4.
+
+POST GO LIVE SUPPORT:
+- Always include: 4 hours
+
+PROJECT MANAGEMENT:
+- Always include. Hours = 15% of all other hours combined, rounded to nearest 2. Min 6, Max 20.
+- If total hours > 80: bullet = "Provide weekly status reporting, including updates on timeline, budget, and key action items"
+- If total hours <= 80: bullet = "Provide status updates for the project regarding timeline, effort and to-dos"
+
+SCOPE RULES:
+- Only include products explicitly mentioned in transcript
+- If ambiguous or not discussed: OUT OF SCOPE, add to exclusions
+
+REQUIRED PHASE DESCRIPTION OPENINGS:
+- Discovery & Design: "Conduct working discovery and design sessions with the Client which will include:"
+- Configuration: "Based on the understanding of the current business processes, Salesforce will be configured to manage, enhance, and automate the business processes. The following configurations will be made based on the design:"
+- UAT: "User Acceptance Testing (UAT) is used to validate that the system meets the scope of the project. For this project, Standard UAT will be completed. A block of X hours will be allotted to perform the following UAT tasks:"
+- Data Migration: "This is a block of X hours to perform the following data migration tasks:"
+- Post Go Live Support: "This is a bucket of X hours to provide support after the Project has gone live. Post-Go Live Support hours expire after two-weeks, or when exhausted. Client will not be billed for unused support hours."
+- Training: "Provide high-level end user and admin training"
+- Project Management: "Project Management hours support alignment, coordination, and successful delivery of the project, including:"
+
+Return ONLY raw JSON. No markdown. No explanation.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -55,6 +119,7 @@ RULES:
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 4000,
+        temperature: 0,
         system: SYSTEM_PROMPT,
         messages: [
           {
